@@ -41,9 +41,13 @@ pub struct MdlTelemetry {
 #[inline]
 fn math_log2(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.log2() }
+    {
+        x.log2()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::log2f(x) }
+    {
+        libm::log2f(x)
+    }
 }
 
 /// Computes honest MDL metric and residual telemetry for predicted vs true points.

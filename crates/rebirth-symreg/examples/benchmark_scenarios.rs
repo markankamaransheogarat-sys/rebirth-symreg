@@ -36,7 +36,9 @@ fn main() {
     for _ in 0..60 {
         reg1.step_generation(&xs1, &ys1);
         if let Some(ref best) = reg1.best_individual {
-            if best.mse < 0.001 { break; }
+            if best.mse < 0.001 {
+                break;
+            }
         }
     }
 
@@ -44,11 +46,24 @@ fn main() {
     let best1 = reg1.best_individual.as_ref().unwrap();
     println!("Discovered Equation:  {}", best1.expr.to_equation_string());
     println!("MSE:                  {:.6}", t1.mse);
-    println!("Raw Array Size:       {} bytes (200 x 4 bytes)", t1.raw_bytes);
-    println!("Bytecode Size:        {} bytes (incl. constants)", t1.bytecode_bytes);
-    println!("Residuals Size:       {} bytes (exact match: {})", t1.residual_bytes, t1.exact_match);
+    println!(
+        "Raw Array Size:       {} bytes (200 x 4 bytes)",
+        t1.raw_bytes
+    );
+    println!(
+        "Bytecode Size:        {} bytes (incl. constants)",
+        t1.bytecode_bytes
+    );
+    println!(
+        "Residuals Size:       {} bytes (exact match: {})",
+        t1.residual_bytes, t1.exact_match
+    );
     println!("Total Compressed:     {} bytes", t1.total_compressed_bytes);
-    println!("MEASURED RATIO:       {:.2}:1 ({:.2}% reduction)\n", t1.compression_ratio, (1.0 - 1.0 / t1.compression_ratio) * 100.0);
+    println!(
+        "MEASURED RATIO:       {:.2}:1 ({:.2}% reduction)\n",
+        t1.compression_ratio,
+        (1.0 - 1.0 / t1.compression_ratio) * 100.0
+    );
 
     // -------------------------------------------------------------------------
     // Scenario 2: Polynomial Law (y = x * x - 3.0)
@@ -66,7 +81,9 @@ fn main() {
     for _ in 0..60 {
         reg2.step_generation(&xs2, &ys2);
         if let Some(ref best) = reg2.best_individual {
-            if best.mse < 0.001 { break; }
+            if best.mse < 0.001 {
+                break;
+            }
         }
     }
 
@@ -76,9 +93,16 @@ fn main() {
     println!("MSE:                  {:.6}", t2.mse);
     println!("Raw Array Size:       {} bytes", t2.raw_bytes);
     println!("Bytecode Size:        {} bytes", t2.bytecode_bytes);
-    println!("Residuals Size:       {} bytes (exact match: {})", t2.residual_bytes, t2.exact_match);
+    println!(
+        "Residuals Size:       {} bytes (exact match: {})",
+        t2.residual_bytes, t2.exact_match
+    );
     println!("Total Compressed:     {} bytes", t2.total_compressed_bytes);
-    println!("MEASURED RATIO:       {:.2}:1 ({:.2}% reduction)\n", t2.compression_ratio, (1.0 - 1.0 / t2.compression_ratio) * 100.0);
+    println!(
+        "MEASURED RATIO:       {:.2}:1 ({:.2}% reduction)\n",
+        t2.compression_ratio,
+        (1.0 - 1.0 / t2.compression_ratio) * 100.0
+    );
 
     // -------------------------------------------------------------------------
     // Scenario 3: Signal + 15% Noise (y = x * x - 3.0 + noise)
@@ -102,9 +126,19 @@ fn main() {
     println!("MSE:                  {:.6}", t3.mse);
     println!("Raw Array Size:       {} bytes", t3.raw_bytes);
     println!("Bytecode Size:        {} bytes", t3.bytecode_bytes);
-    println!("Residuals Size:       {} bytes (exact match: {})", t3.residual_bytes, t3.exact_match);
-    println!("Total Compressed:     {} bytes (Formula + Noise Residuals)", t3.total_compressed_bytes);
-    println!("MEASURED RATIO:       {:.2}:1 ({:.2}% reduction) -> NOISE CONSUMED THE GAINS!\n", t3.compression_ratio, (1.0 - 1.0 / t3.compression_ratio) * 100.0);
+    println!(
+        "Residuals Size:       {} bytes (exact match: {})",
+        t3.residual_bytes, t3.exact_match
+    );
+    println!(
+        "Total Compressed:     {} bytes (Formula + Noise Residuals)",
+        t3.total_compressed_bytes
+    );
+    println!(
+        "MEASURED RATIO:       {:.2}:1 ({:.2}% reduction) -> NOISE CONSUMED THE GAINS!\n",
+        t3.compression_ratio,
+        (1.0 - 1.0 / t3.compression_ratio) * 100.0
+    );
 
     // -------------------------------------------------------------------------
     // Scenario 4: Pure Uniform Random Noise (No Law)
@@ -127,7 +161,13 @@ fn main() {
     println!("MSE:                  {:.6} (High residual error)", t4.mse);
     println!("Raw Array Size:       {} bytes", t4.raw_bytes);
     println!("Bytecode Size:        {} bytes", t4.bytecode_bytes);
-    println!("Residuals Size:       {} bytes (residuals dominate)", t4.residual_bytes);
+    println!(
+        "Residuals Size:       {} bytes (residuals dominate)",
+        t4.residual_bytes
+    );
     println!("Total Compressed:     {} bytes", t4.total_compressed_bytes);
-    println!("MEASURED RATIO:       {:.2}:1 -> HONEST FAILURE (No compression on pure random data!)\n", t4.compression_ratio);
+    println!(
+        "MEASURED RATIO:       {:.2}:1 -> HONEST FAILURE (No compression on pure random data!)\n",
+        t4.compression_ratio
+    );
 }

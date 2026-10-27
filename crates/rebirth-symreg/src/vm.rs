@@ -46,49 +46,77 @@ pub enum VmError {
 #[inline]
 fn math_sin(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.sin() }
+    {
+        x.sin()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::sinf(x) }
+    {
+        libm::sinf(x)
+    }
 }
 
 #[inline]
 fn math_cos(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.cos() }
+    {
+        x.cos()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::cosf(x) }
+    {
+        libm::cosf(x)
+    }
 }
 
 #[inline]
 fn math_exp(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.exp() }
+    {
+        x.exp()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::expf(x) }
+    {
+        libm::expf(x)
+    }
 }
 
 #[inline]
 fn math_ln(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.ln() }
+    {
+        x.ln()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::logf(x) }
+    {
+        libm::logf(x)
+    }
 }
 
 #[inline]
 fn math_sqrt(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.sqrt() }
+    {
+        x.sqrt()
+    }
     #[cfg(all(not(feature = "std"), feature = "libm"))]
-    { libm::sqrtf(x) }
+    {
+        libm::sqrtf(x)
+    }
 }
 
 #[inline]
 fn math_abs(x: f32) -> f32 {
     #[cfg(feature = "std")]
-    { x.abs() }
+    {
+        x.abs()
+    }
     #[cfg(not(feature = "std"))]
-    { if x < 0.0 { -x } else { x } }
+    {
+        if x < 0.0 {
+            -x
+        } else {
+            x
+        }
+    }
 }
 
 /// Evaluates a bytecode program on input `x` using a fixed-capacity stack (zero allocations).
@@ -114,34 +142,48 @@ pub fn eval_bytecode(bytecode: &[OpCode], x: f32) -> Result<f32, VmError> {
                 sp += 1;
             }
             OpCode::Add => {
-                if sp < 2 { return Err(VmError::StackUnderflow); }
+                if sp < 2 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let b = stack[sp - 1];
                 let a = stack[sp - 2];
                 sp -= 1;
                 let res = a + b;
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Sub => {
-                if sp < 2 { return Err(VmError::StackUnderflow); }
+                if sp < 2 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let b = stack[sp - 1];
                 let a = stack[sp - 2];
                 sp -= 1;
                 let res = a - b;
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Mul => {
-                if sp < 2 { return Err(VmError::StackUnderflow); }
+                if sp < 2 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let b = stack[sp - 1];
                 let a = stack[sp - 2];
                 sp -= 1;
                 let res = a * b;
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Div => {
-                if sp < 2 { return Err(VmError::StackUnderflow); }
+                if sp < 2 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let b = stack[sp - 1];
                 let a = stack[sp - 2];
                 sp -= 1;
@@ -150,41 +192,57 @@ pub fn eval_bytecode(bytecode: &[OpCode], x: f32) -> Result<f32, VmError> {
                     return Err(VmError::MathDomainError);
                 }
                 let res = a / b;
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Sin => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let a = stack[sp - 1];
                 stack[sp - 1] = math_sin(a);
             }
             OpCode::Cos => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let a = stack[sp - 1];
                 stack[sp - 1] = math_cos(a);
             }
             OpCode::Exp => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let a = stack[sp - 1];
                 if a > 20.0 {
                     return Err(VmError::MathDomainError);
                 }
                 let res = math_exp(a);
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Log => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let a = stack[sp - 1];
                 if a <= 1e-6 {
                     return Err(VmError::MathDomainError);
                 }
                 let res = math_ln(a);
-                if !res.is_finite() { return Err(VmError::InvalidResult); }
+                if !res.is_finite() {
+                    return Err(VmError::InvalidResult);
+                }
                 stack[sp - 1] = res;
             }
             OpCode::Sqrt => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 let a = stack[sp - 1];
                 if a < 0.0 {
                     return Err(VmError::MathDomainError);
@@ -192,11 +250,15 @@ pub fn eval_bytecode(bytecode: &[OpCode], x: f32) -> Result<f32, VmError> {
                 stack[sp - 1] = math_sqrt(a);
             }
             OpCode::Abs => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 stack[sp - 1] = math_abs(stack[sp - 1]);
             }
             OpCode::Neg => {
-                if sp < 1 { return Err(VmError::StackUnderflow); }
+                if sp < 1 {
+                    return Err(VmError::StackUnderflow);
+                }
                 stack[sp - 1] = -stack[sp - 1];
             }
         }

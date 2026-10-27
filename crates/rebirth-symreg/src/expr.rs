@@ -110,16 +110,32 @@ impl Expr {
             Expr::Unary(UnaryOp::Sqrt, child) => format!("sqrt({})", child.to_equation_string()),
             Expr::Unary(UnaryOp::Abs, child) => format!("abs({})", child.to_equation_string()),
             Expr::Binary(BinaryOp::Add, left, right) => {
-                format!("({} + {})", left.to_equation_string(), right.to_equation_string())
+                format!(
+                    "({} + {})",
+                    left.to_equation_string(),
+                    right.to_equation_string()
+                )
             }
             Expr::Binary(BinaryOp::Sub, left, right) => {
-                format!("({} - {})", left.to_equation_string(), right.to_equation_string())
+                format!(
+                    "({} - {})",
+                    left.to_equation_string(),
+                    right.to_equation_string()
+                )
             }
             Expr::Binary(BinaryOp::Mul, left, right) => {
-                format!("({} * {})", left.to_equation_string(), right.to_equation_string())
+                format!(
+                    "({} * {})",
+                    left.to_equation_string(),
+                    right.to_equation_string()
+                )
             }
             Expr::Binary(BinaryOp::Div, left, right) => {
-                format!("({} / {})", left.to_equation_string(), right.to_equation_string())
+                format!(
+                    "({} / {})",
+                    left.to_equation_string(),
+                    right.to_equation_string()
+                )
             }
         }
     }

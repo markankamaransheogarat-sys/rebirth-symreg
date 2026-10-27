@@ -16,18 +16,11 @@ fn test_vm_evaluation() {
     assert!((res - 10.0).abs() < 1e-6);
 
     // Strict division by near-zero must fail with MathDomainError
-    let div_zero = vec![
-        OpCode::LoadConst(5.0),
-        OpCode::LoadConst(0.0),
-        OpCode::Div,
-    ];
+    let div_zero = vec![OpCode::LoadConst(5.0), OpCode::LoadConst(0.0), OpCode::Div];
     assert_eq!(eval_bytecode(&div_zero, 0.0), Err(VmError::MathDomainError));
 
     // Strict log of negative must fail
-    let log_neg = vec![
-        OpCode::LoadConst(-1.0),
-        OpCode::Log,
-    ];
+    let log_neg = vec![OpCode::LoadConst(-1.0), OpCode::Log];
     assert_eq!(eval_bytecode(&log_neg, 0.0), Err(VmError::MathDomainError));
 }
 

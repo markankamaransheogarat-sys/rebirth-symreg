@@ -46,7 +46,11 @@ impl Rng {
 
     #[inline]
     pub fn next_usize(&mut self, bound: usize) -> usize {
-        if bound == 0 { 0 } else { (self.next_u64() % bound as u64) as usize }
+        if bound == 0 {
+            0
+        } else {
+            (self.next_u64() % bound as u64) as usize
+        }
     }
 }
 
@@ -199,7 +203,9 @@ impl SymbolicRegressor {
 
         // Sort descending by fitness (best first)
         self.population.sort_by(|a, b| {
-            b.fitness.partial_cmp(&a.fitness).unwrap_or(core::cmp::Ordering::Equal)
+            b.fitness
+                .partial_cmp(&a.fitness)
+                .unwrap_or(core::cmp::Ordering::Equal)
         });
 
         // Track best overall
@@ -331,9 +337,7 @@ impl SymbolicRegressor {
             b.clone()
         } else {
             match a {
-                Expr::Unary(op, child) => {
-                    Expr::Unary(*op, Box::new(self.crossover(child, b)))
-                }
+                Expr::Unary(op, child) => Expr::Unary(*op, Box::new(self.crossover(child, b))),
                 Expr::Binary(op, left, right) => {
                     if self.rng.next_f32() < 0.5 {
                         Expr::Binary(*op, Box::new(self.crossover(left, b)), right.clone())
@@ -356,6 +360,11 @@ impl SymbolicRegressor {
             preds.push(eval_bytecode(&bytecode, x).unwrap_or(0.0));
         }
 
-        Some(compute_mdl_telemetry(&bytecode, ys, &preds, self.config.epsilon))
+        Some(compute_mdl_telemetry(
+            &bytecode,
+            ys,
+            &preds,
+            self.config.epsilon,
+        ))
     }
 }

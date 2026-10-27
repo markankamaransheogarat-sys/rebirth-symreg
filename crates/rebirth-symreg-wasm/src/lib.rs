@@ -1,8 +1,6 @@
 //! WebAssembly bindings for rebirth-symreg.
 
-use rebirth_symreg::{
-    eval_bytecode, RegressorConfig, SymbolicRegressor,
-};
+use rebirth_symreg::{eval_bytecode, RegressorConfig, SymbolicRegressor};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -16,13 +14,7 @@ pub struct WasmRegressor {
 #[wasm_bindgen]
 impl WasmRegressor {
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        pop_size: usize,
-        max_depth: usize,
-        epsilon: f32,
-        penalty: f32,
-        seed: u32,
-    ) -> Self {
+    pub fn new(pop_size: usize, max_depth: usize, epsilon: f32, penalty: f32, seed: u32) -> Self {
         let config = RegressorConfig {
             population_size: pop_size,
             max_depth,
