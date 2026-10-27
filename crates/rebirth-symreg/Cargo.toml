@@ -1,0 +1,23 @@
+[package]
+name = "rebirth-symreg"
+version = "0.1.0"
+description = "A lightweight symbolic regression and program synthesis engine in safe Rust with stack VM, genetic programming, and honest Minimum Description Length (MDL) residual telemetry."
+readme = "../../README.md"
+homepage = "https://markankamaransheogarat-sys.github.io/rebirth-symreg/"
+documentation = "https://docs.rs/rebirth-symreg"
+keywords = ["symbolic-regression", "genetic-programming", "machine-learning", "compression", "synthesis"]
+categories = ["algorithms", "mathematics", "science", "no-std", "wasm"]
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = ["std"]
+std = []
+libm = ["dep:libm"]
+
+[dependencies]
+libm = { version = "0.2", optional = true }
+
+[dev-dependencies]

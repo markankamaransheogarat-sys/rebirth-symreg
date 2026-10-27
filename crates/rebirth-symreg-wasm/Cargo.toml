@@ -1,0 +1,16 @@
+[package]
+name = "rebirth-symreg-wasm"
+version = "0.1.0"
+description = "WebAssembly bindings and interactive dashboard for rebirth-symreg"
+publish = false
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+rebirth-symreg = { path = "../rebirth-symreg" }
+wasm-bindgen = "0.2"

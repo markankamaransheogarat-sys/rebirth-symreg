@@ -1,0 +1,18 @@
+[workspace]
+resolver = "2"
+members = ["crates/rebirth-symreg", "crates/rebirth-symreg-wasm"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/markankamaransheogarat-sys/rebirth-symreg"
+authors = ["markankamaransheogarat-sys"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[profile.bench]
+inherits = "release"

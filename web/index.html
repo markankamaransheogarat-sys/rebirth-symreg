@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>rebirth-symreg — Symbolic Regression & Program Synthesis in Safe Rust</title>
+<meta name="description" content="Genetic program synthesis engine with honest Minimum Description Length (MDL) telemetry, zero-cost error handling, and bytecode compilation in 100% safe Rust + WebAssembly.">
+<style>
+  :root {
+    --bg: #0a0d14; --panel: #111622; --card: #161d2d; --line: #222d42; --text: #e6edf6; --dim: #8b99b0;
+    --acc: #38bdf8; --acc2: #f59e0b; --bad: #f43f5e; --good: #10b981; --purple: #a855f7;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, sans-serif; overflow-x: hidden; }
+  body { min-height: 100vh; padding: 0 max(16px, env(safe-area-inset-right)) 28px max(16px, env(safe-area-inset-left)); }
+  a { color: var(--acc); text-decoration: none; } a:hover { text-decoration: underline; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; max-width: 1240px; margin: 0 auto; padding: 20px 0 12px; }
+  h1 { margin: 0; font: 700 22px var(--mono); letter-spacing: .02em; }
+  h1 span { color: var(--acc); }
+  .tag { color: var(--dim); flex: 1 1 360px; font-size: 14px; }
+  .links { font: 13px var(--mono); display: flex; gap: 14px; }
+  main { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; }
+  .stage { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .tabs { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; background: #0c1018; }
+  .tabs button { flex: 0 0 auto; background: transparent; border: 1px solid transparent; color: var(--dim); padding: 7px 13px; border-radius: 8px; font: 600 13px var(--mono); cursor: pointer; transition: all .15s; }
+  .tabs button:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .tabs button[aria-selected="true"] { color: #020617; background: var(--acc); }
+  .canvas-wrap { position: relative; width: 100%; height: min(58vh, 520px); min-height: 360px; }
+  #cv { display: block; width: 100%; height: 100%; cursor: crosshair; background: radial-gradient(ellipse at 50% 50%, #151d2c 0%, #0a0d14 80%); }
+  .formula-banner {
+    padding: 12px 18px; background: #0c1018; border-top: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .formula-title { font: 700 11px var(--mono); text-transform: uppercase; letter-spacing: .12em; color: var(--dim); }
+  .formula-text { font: 700 16px var(--mono); color: var(--acc); word-break: break-all; }
+  .formula-desc { font-size: 13px; color: var(--dim); }
+  aside { display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .card h2 { margin: 0 0 10px; font: 700 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .stat { display: flex; justify-content: space-between; font: 13.5px var(--mono); padding: 3.5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .stat b { color: var(--acc); font-weight: 600; }
+  .stat b.green { color: var(--good); }
+  .stat b.amber { color: var(--acc2); }
+  .stat b.rose { color: var(--bad); }
+  .stat b.large { font-size: 16px; }
+  
+  .mdl-bar-wrap { margin-top: 8px; }
+  .mdl-bar-label { display: flex; justify-content: space-between; font: 12px var(--mono); color: var(--dim); margin-bottom: 4px; }
+  .mdl-bar { height: 12px; border-radius: 6px; background: #1e293b; overflow: hidden; display: flex; }
+  .mdl-bar-code { background: var(--acc); height: 100%; transition: width .2s; }
+  .mdl-bar-residuals { background: var(--acc2); height: 100%; transition: width .2s; }
+
+  label { display: block; font-size: 13px; color: var(--dim); margin: 10px 0 3px; }
+  label output { float: right; color: var(--text); font-family: var(--mono); }
+  input[type=range] { width: 100%; accent-color: var(--acc); cursor: pointer; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .btn { width: 100%; padding: 9px 12px; background: #182234; color: var(--text); border: 1px solid var(--line); border-radius: 8px; font: 600 13px var(--mono); cursor: pointer; transition: all .15s; text-align: center; }
+  .btn:hover { border-color: var(--acc); background: #202c44; }
+  .btn-primary { background: #0284c7; border-color: #38bdf8; color: #fff; }
+  .btn-primary:hover { background: #0369a1; }
+  footer { max-width: 1240px; margin: 18px auto 0; color: var(--dim); font-size: 13px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  #err { max-width: 1240px; margin: 0 auto 12px; color: var(--bad); display: none; padding: 12px; background: rgba(244,63,94,0.1); border-radius: 8px; border: 1px solid var(--bad); font-family: var(--mono); font-size: 13px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } .canvas-wrap { height: 48vh; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>rebirth-symreg <span>0.1.0</span></h1>
+  <div class="tag">Genetic program synthesis & symbolic regression with honest Minimum Description Length (MDL) telemetry in safe Rust + WASM</div>
+  <div class="links">
+    <a href="https://github.com/markankamaransheogarat-sys/rebirth-symreg" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+
+<div id="err"></div>
+
+<main>
+  <div class="stage">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-preset="0" aria-selected="true">1. Harmonic (2·sin(x) + x)</button>
+      <button role="tab" data-preset="1" aria-selected="false">2. Parabola (x² - 3)</button>
+      <button role="tab" data-preset="2" aria-selected="false">3. Parabola + 15% Noise</button>
+      <button role="tab" data-preset="3" aria-selected="false">4. Pure Random Noise</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="cv"></canvas>
+    </div>
+    <div class="formula-banner">
+      <div class="formula-title">Discovered Mathematical Law (Best AST)</div>
+      <div class="formula-text" id="best-formula">Searching...</div>
+      <div class="formula-desc" id="preset-desc">Harmonic wave without noise. Target: discover the analytical law and reduce telemetry to zero residual entropy.</div>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <h2>MDL Telemetry (Information Theory)</h2>
+      <div class="stat"><span>Measured Ratio</span><b id="stat-ratio" class="large green">0.00:1</b></div>
+      <div class="stat"><span>Reduction</span><b id="stat-reduction" class="green">0.00%</b></div>
+      <div class="stat"><span>Raw Data</span><b id="stat-raw">600 B</b></div>
+      <div class="stat"><span>Formula Code</span><b id="stat-code">0 B</b></div>
+      <div class="stat"><span>Quantized Residuals (ε=0.05)</span><b id="stat-residuals">0 B</b></div>
+      <div class="stat"><span>Total Description (MDL)</span><b id="stat-total">0 B</b></div>
+      <div class="stat"><span>Exact Match (|e| ≤ 0.05)</span><b id="stat-exact">No</b></div>
+      <div class="stat"><span>Mean Squared Error (MSE)</span><b id="stat-mse">0.000000</b></div>
+      <div class="stat"><span>R² Goodness of Fit</span><b id="stat-r2">0.0000</b></div>
+      <div class="stat"><span>Generation</span><b id="stat-gen">0</b></div>
+
+      <div class="mdl-bar-wrap">
+        <div class="mdl-bar-label">
+          <span>Formula: <span id="bar-code-pct">0%</span></span>
+          <span>Residuals: <span id="bar-res-pct">0%</span></span>
+        </div>
+        <div class="mdl-bar">
+          <div class="mdl-bar-code" id="bar-code" style="width: 5%;"></div>
+          <div class="mdl-bar-residuals" id="bar-res" style="width: 5%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Evolution Hyperparameters</h2>
+      <label>Population Size <output id="out-pop">150</output></label>
+      <input type="range" id="sl-pop" min="50" max="400" step="25" value="150">
+
+      <label>Max Tree Depth <output id="out-depth">5</output></label>
+      <input type="range" id="sl-depth" min="3" max="7" step="1" value="5">
+
+      <label>MDL Complexity Penalty (λ) <output id="out-pen">0.001</output></label>
+      <input type="range" id="sl-pen" min="0" max="0.01" step="0.0005" value="0.001">
+
+      <label>Quantization Tolerance (ε) <output id="out-eps">0.05</output></label>
+      <input type="range" id="sl-eps" min="0.01" max="0.20" step="0.01" value="0.05">
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-toggle">Pause</button>
+        <button class="btn" id="btn-step">Step +10</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="btn-reset">Reset Search</button>
+        <button class="btn" id="btn-reseed">New Seed</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Why This Is Honest</h2>
+      <p style="margin: 0; font-size: 12.5px; color: var(--dim); line-height: 1.5;">
+        Unlike pseudoscience compression claims, this engine applies <b>Kolmogorov & Shannon Minimum Description Length</b>:
+        <br>&bull; Constants cost <b>5 bytes</b> each (1B opcode + 4B IEEE float).
+        <br>&bull; Residuals cost <b>Shannon entropy</b> of quantized errors.
+        <br>&bull; When data is pure noise (Preset 4), the ratio collapses to <b>~1:1</b> because no law exists in random bits.
+      </p>
+    </div>
+  </aside>
+</main>
+
+<footer>
+  <span>rebirth-symreg &bull; safe Rust + wasm32 &bull; zero unsafe code</span>
+  <span>Minimum Description Length (MDL) Principle &bull; Shannon Entropy</span>
+</footer>
+
+<script type="module">
+import init, { WasmRegressor } from './pkg/rebirth_symreg_wasm.js';
+
+const DESCRIPTIONS = [
+  "Harmonic wave without noise. Target: discover the analytical law y = 2*sin(x) + x and reduce telemetry to zero residual entropy.",
+  "Deterministic quadratic polynomial y = x^2 - 3. Discovers exact algebraic form, yielding ~80:1 compression ratio.",
+  "Deterministic signal with 15% random measurement noise. Demonstrates that noise residuals eat into compression (~4.5:1 ratio).",
+  "Pure random data (uniform noise). Proof of Shannon's theorem: without structure, residuals equal data size, ratio collapses to ~1.1:1."
+];
+
+let regressor = null;
+let currentPreset = 0;
+let running = true;
+let animId = null;
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+const elFormula = document.getElementById('best-formula');
+const elDesc = document.getElementById('preset-desc');
+const elRatio = document.getElementById('stat-ratio');
+const elReduction = document.getElementById('stat-reduction');
+const elRaw = document.getElementById('stat-raw');
+const elCode = document.getElementById('stat-code');
+const elResiduals = document.getElementById('stat-residuals');
+const elTotal = document.getElementById('stat-total');
+const elExact = document.getElementById('stat-exact');
+const elMse = document.getElementById('stat-mse');
+const elR2 = document.getElementById('stat-r2');
+const elGen = document.getElementById('stat-gen');
+const elBarCode = document.getElementById('bar-code');
+const elBarRes = document.getElementById('bar-res');
+const elBarCodePct = document.getElementById('bar-code-pct');
+const elBarResPct = document.getElementById('bar-res-pct');
+const btnToggle = document.getElementById('btn-toggle');
+
+const slPop = document.getElementById('sl-pop');
+const slDepth = document.getElementById('sl-depth');
+const slPen = document.getElementById('sl-pen');
+const slEps = document.getElementById('sl-eps');
+
+function initRegressor(seed) {
+  const pop = parseInt(slPop.value, 10);
+  const depth = parseInt(slDepth.value, 10);
+  const eps = parseFloat(slEps.value);
+  const pen = parseFloat(slPen.value);
+  const s = seed !== undefined ? seed : (Math.floor(Math.random() * 100000) + 1);
+
+  regressor = new WasmRegressor(pop, depth, eps, pen, s);
+  regressor.load_preset(currentPreset);
+}
+
+function updateSliders() {
+  document.getElementById('out-pop').textContent = slPop.value;
+  document.getElementById('out-depth').textContent = slDepth.value;
+  document.getElementById('out-pen').textContent = parseFloat(slPen.value).toFixed(4);
+  document.getElementById('out-eps').textContent = parseFloat(slEps.value).toFixed(2);
+}
+
+function setPreset(idx) {
+  currentPreset = idx;
+  document.querySelectorAll('.tabs button').forEach((btn, i) => {
+    btn.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+  });
+  elDesc.textContent = DESCRIPTIONS[idx] || "";
+  initRegressor();
+}
+
+function resizeCanvas() {
+  const rect = cv.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = rect.width * dpr;
+  cv.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+function drawPlot() {
+  const rect = cv.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!regressor) return;
+
+  const xs = regressor.get_data_x();
+  const ys = regressor.get_data_y();
+  const preds = regressor.get_predicted_y();
+
+  if (!xs || xs.length === 0) return;
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let i = 0; i < xs.length; i++) {
+    if (xs[i] < minX) minX = xs[i];
+    if (xs[i] > maxX) maxX = xs[i];
+    if (ys[i] < minY) minY = ys[i];
+    if (ys[i] > maxY) maxY = ys[i];
+    if (preds[i] < minY) minY = preds[i];
+    if (preds[i] > maxY) maxY = preds[i];
+  }
+
+  // Add margin
+  const padX = (maxX - minX) * 0.08 || 1;
+  const padY = (maxY - minY) * 0.12 || 1;
+  minX -= padX; maxX += padX;
+  minY -= padY; maxY += padY;
+
+  const pad = { top: 24, right: 28, bottom: 36, left: 52 };
+  const pw = W - pad.left - pad.right;
+  const ph = H - pad.top - pad.bottom;
+
+  function toPx(x, y) {
+    return {
+      px: pad.left + ((x - minX) / (maxX - minX)) * pw,
+      py: pad.top + ph - ((y - minY) / (maxY - minY)) * ph
+    };
+  }
+
+  // Draw grid
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#64748b';
+  ctx.font = '11px ui-monospace, monospace';
+
+  const gridSteps = 6;
+  for (let i = 0; i <= gridSteps; i++) {
+    const gy = minY + (i / gridSteps) * (maxY - minY);
+    const p = toPx(minX, gy);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, p.py);
+    ctx.lineTo(pad.left + pw, p.py);
+    ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText(gy.toFixed(1), pad.left - 8, p.py + 4);
+  }
+
+  for (let i = 0; i <= gridSteps; i++) {
+    const gx = minX + (i / gridSteps) * (maxX - minX);
+    const p = toPx(gx, minY);
+    ctx.beginPath();
+    ctx.moveTo(p.px, pad.top);
+    ctx.lineTo(p.px, pad.top + ph);
+    ctx.stroke();
+    ctx.textAlign = 'center';
+    ctx.fillText(gx.toFixed(1), p.px, pad.top + ph + 18);
+  }
+
+  // Draw zero axes if in range
+  if (minY <= 0 && maxY >= 0) {
+    const p0 = toPx(minX, 0);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, p0.py);
+    ctx.lineTo(pad.left + pw, p0.py);
+    ctx.stroke();
+  }
+
+  // Draw residuals lines (amber/red)
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+  for (let i = 0; i < xs.length; i++) {
+    const pReal = toPx(xs[i], ys[i]);
+    const pPred = toPx(xs[i], preds[i]);
+    ctx.beginPath();
+    ctx.moveTo(pReal.px, pReal.py);
+    ctx.lineTo(pPred.px, pPred.py);
+    ctx.stroke();
+  }
+
+  // Draw data points (blue glow)
+  for (let i = 0; i < xs.length; i++) {
+    const p = toPx(xs[i], ys[i]);
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(p.px, p.py, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw synthesized curve line (cyan solid)
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  let started = false;
+  for (let i = 0; i < xs.length; i++) {
+    const p = toPx(xs[i], preds[i]);
+    if (!Number.isFinite(p.py)) continue;
+    if (!started) {
+      ctx.moveTo(p.px, p.py);
+      started = true;
+    } else {
+      ctx.lineTo(p.px, p.py);
+    }
+  }
+  ctx.stroke();
+
+  // Legend
+  ctx.font = '12px ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#38bdf8';
+  ctx.beginPath(); ctx.arc(pad.left + 10, pad.top + 14, 4, 0, Math.PI*2); ctx.fill();
+  ctx.fillText('Ground Truth Points', pad.left + 20, pad.top + 18);
+
+  ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(pad.left + 170, pad.top + 14); ctx.lineTo(pad.left + 195, pad.top + 14); ctx.stroke();
+  ctx.fillStyle = '#00f0ff';
+  ctx.fillText('Synthesized AST Formula', pad.left + 205, pad.top + 18);
+}
+
+function updateUI() {
+  if (!regressor) return;
+
+  const t = regressor.get_telemetry_array();
+  const rawBytes = t[0];
+  const codeBytes = t[1];
+  const residualBytes = t[2];
+  const totalBytes = t[3];
+  const ratio = t[4];
+  const exactMatch = t[5] > 0.5;
+  const mse = t[6];
+  const r2 = t[7];
+  const gen = regressor.get_generation();
+  const eq = regressor.get_best_equation();
+
+  elFormula.textContent = eq;
+  elRatio.textContent = `${ratio.toFixed(2)}:1`;
+  const reduction = rawBytes > 0 ? (1.0 - totalBytes / rawBytes) * 100 : 0;
+  elReduction.textContent = `${reduction.toFixed(2)}%`;
+
+  if (ratio >= 50.0) {
+    elRatio.className = 'large green';
+    elReduction.className = 'green';
+  } else if (ratio >= 2.0) {
+    elRatio.className = 'large amber';
+    elReduction.className = 'amber';
+  } else {
+    elRatio.className = 'large rose';
+    elReduction.className = 'rose';
+  }
+
+  elRaw.textContent = `${rawBytes} B`;
+  elCode.textContent = `${codeBytes} B`;
+  elResiduals.textContent = `${residualBytes} B`;
+  elTotal.textContent = `${totalBytes} B`;
+  elExact.textContent = exactMatch ? "YES (Within ε)" : "NO";
+  elExact.style.color = exactMatch ? "var(--good)" : "var(--dim)";
+  elMse.textContent = mse.toFixed(6);
+  elR2.textContent = r2.toFixed(4);
+  elGen.textContent = gen;
+
+  const pctCode = totalBytes > 0 ? (codeBytes / totalBytes) * 100 : 0;
+  const pctRes = totalBytes > 0 ? (residualBytes / totalBytes) * 100 : 0;
+  elBarCode.style.width = `${pctCode.toFixed(1)}%`;
+  elBarRes.style.width = `${pctRes.toFixed(1)}%`;
+  elBarCodePct.textContent = `${pctCode.toFixed(0)}%`;
+  elBarResPct.textContent = `${pctRes.toFixed(0)}%`;
+}
+
+function loop() {
+  if (running && regressor) {
+    regressor.step(3); // 3 generations per frame for smooth 60fps
+    updateUI();
+    drawPlot();
+  }
+  animId = requestAnimationFrame(loop);
+}
+
+// Event Listeners
+document.querySelectorAll('.tabs button').forEach((btn) => {
+  btn.addEventListener('click', (e) => {
+    const id = parseInt(e.target.dataset.preset, 10);
+    setPreset(id);
+    updateUI();
+    drawPlot();
+  });
+});
+
+btnToggle.addEventListener('click', () => {
+  running = !running;
+  btnToggle.textContent = running ? "Pause" : "Resume";
+  btnToggle.classList.toggle('btn-primary', running);
+});
+
+document.getElementById('btn-step').addEventListener('click', () => {
+  if (regressor) {
+    regressor.step(10);
+    updateUI();
+    drawPlot();
+  }
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (regressor) {
+    regressor.reset();
+    updateUI();
+    drawPlot();
+  }
+});
+
+document.getElementById('btn-reseed').addEventListener('click', () => {
+  initRegressor();
+  updateUI();
+  drawPlot();
+});
+
+[slPop, slDepth, slPen, slEps].forEach(sl => {
+  sl.addEventListener('input', () => {
+    updateSliders();
+    initRegressor();
+    updateUI();
+    drawPlot();
+  });
+});
+
+async function main() {
+  try {
+    await init();
+    resizeCanvas();
+    updateSliders();
+    initRegressor(42);
+    updateUI();
+    drawPlot();
+    animId = requestAnimationFrame(loop);
+  } catch (e) {
+    const errBox = document.getElementById('err');
+    errBox.style.display = 'block';
+    errBox.textContent = `WASM Initialization Error: ${e.message || e}`;
+  }
+}
+
+main();
+</script>
+</body>
+</html>
